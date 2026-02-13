@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>Linda · from peace to passion</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Georgia', 'Times New Roman', serif;
+      background: #ffefed;  /* fallback – will be overridden by gradient */
+      overflow-x: hidden;
+      color: #fff9f5;
+    }
+
+    /* main scroll container */
+    .scroll-container {
+      position: relative;
+      width: 100%;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #fadcd4 0%, #b33b4a 40%, #1a0b0b 80%, #0a0202 100%);
+      background-attachment: scroll; /* so gradient moves with content */
+      transition: background 0.2s ease;
+      z-index: 1;
+    }
+
+    /* particle layers (petals & sparkles) */
+    #petal-canvas, #sparkle-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 5;
+    }
+    #sparkle-canvas { z-index: 6; }
+
+    /* main content stack */
+    .content {
+      position: relative;
+      z-index: 20;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 5rem 1.5rem;
+      backdrop-filter: brightness(0.98);
+      text-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    /* ----- audio invitation (golden vinyl / pulsing heart) ----- */
+    .audio-invitation {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(20, 5, 5, 0.75);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      transition: opacity 0.8s ease, visibility 0.8s;
+    }
+    .invitation-card {
+      background: rgba(26, 10, 10, 0.5);
+      border: 2px solid rgba(212, 175, 55, 0.6);
+      border-radius: 48px;
+      padding: 2.5rem 2rem;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 40px #d4af37;
+      max-width: 320px;
+      width: 80%;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+    .invitation-card:hover {
+      transform: scale(1.02);
+      border-color: #e4c580;
+    }
+    .vinyl-heart {
+      font-size: 4.5rem;
+      line-height: 1;
+      margin-bottom: 1rem;
+      animation: pulseGold 1.8s infinite ease-in-out;
+      filter: drop-shadow(0 0 12px gold);
+    }
+    @keyframes pulseGold {
+      0% { transform: scale(1); text-shadow: 0 0 10px #f90; }
+      50% { transform: scale(1.08); text-shadow: 0 0 25px #ffb347; }
+      100% { transform: scale(1); text-shadow: 0 0 10px #f90; }
+    }
+    .invite-text {
+      font-family: 'Didot', 'Georgia', serif;
+      font-size: 1.6rem;
+      letter-spacing: 2px;
+      color: #fdeacb;
+      margin: 0.5rem 0 0.2rem;
+    }
+    .sub-invite {
+      font-size: 1rem;
+      color: #d4af37;
+      font-style: italic;
+      border-top: 1px dashed #b38b40;
+      padding-top: 1rem;
+      margin-top: 1rem;
+    }
+
+    /* chapter sections */
+    .chapter {
+      margin-bottom: 5rem;
+      opacity: 0;
+      transform: translateY(30px);
+      animation: fadeUp 0.8s forwards;
+      animation-play-state: paused; /* will be run by scroll observer later, but we want them visible anyway – we start with visible via class */
+    }
+    .chapter.visible {
+      animation-play-state: running;
+    }
+
+    /* but we want them to be visible from start, we'll set opacity 1 after small delay – we actually control via JS, but as fallback all chapters visible */
+    .chapter { opacity: 1; transform: none; } /* base visible, then JS can fine-tune */
+
+    /* headers & icons */
+    .crown-icon, .infinity-icon {
+      display: inline-flex;
+      vertical-align: middle;
+      margin: 0 8px;
+    }
+    .crown-icon svg, .infinity-icon svg {
+      filter: drop-shadow(0 0 4px #ffd966);
+    }
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.9rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #f5d7b3;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+      padding-bottom: 0.6rem;
+    }
+
+    /* gif placeholders (we use CSS animations to simulate) */
+    .cinematic-gif {
+      width: 100%;
+      height: 100px;
+      border-radius: 60px 20px 60px 20px;
+      margin: 1.8rem 0;
+      background: radial-gradient(circle at 30% 30%, #ffb6a0, #3b0c0c);
+      box-shadow: 0 0 30px rgba(255, 100, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      color: rgba(255,255,200,0.7);
+      transition: box-shadow 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .candle-gif::after {
+      content: "🕯️";
+      font-size: 3.5rem;
+      opacity: 0.9;
+      animation: flicker 0.8s infinite alternate;
+    }
+    @keyframes flicker { 0% { opacity: 0.4; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1.1); } }
+    .heartbeat-gif::after {
+      content: "📈❤️";
+      font-size: 3rem;
+      animation: pulseBeat 1s infinite;
+    }
+    @keyframes pulseBeat { 0% { opacity: 0.6; } 50% { opacity: 1; text-shadow: 0 0 20px red; } }
+    .embers-gif::after {
+      content: "🔥✨";
+      font-size: 3.8rem;
+      animation: emberRise 2s infinite;
+    }
+    @keyframes emberRise { 0% { transform: translateY(8px); opacity: 0.5; } 100% { transform: translateY(-12px); opacity: 1; } }
+    .flame-intense {
+      background: #2f0a0a;
+      box-shadow: 0 0 70px #ff5e00;
+    }
+
+    /* photo frames (gold border) */
+    .photo-frame {
+      border: 3px solid #d4af37;
+      border-radius: 16px 4px 24px 4px;
+      padding: 0.8rem;
+      background: rgba(0,0,0,0.1);
+      margin: 2rem 0;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+      font-style: italic;
+      text-align: center;
+      color: #fbead2;
+    }
+
+    /* text styles */
+    p {
+      font-size: 1.4rem;
+      line-height: 1.7;
+      margin: 1.8rem 0;
+      font-weight: 300;
+      color: #fff6ee;
+    }
+    .intimate-text {
+      font-family: 'Garamond', serif;
+      letter-spacing: 0.3px;
+    }
+    .foreign-block {
+      font-size: 1.6rem;
+      line-height: 2.2rem;
+      background: rgba(10, 0, 0, 0.35);
+      border-left: 4px solid #b8860b;
+      padding: 1.5rem 1.2rem;
+      margin: 2rem 0;
+      border-radius: 0 40px 0 40px;
+      backdrop-filter: blur(2px);
+    }
+
+    /* lock / for your eyes only */
+    .transition-lock {
+      text-align: center;
+      margin: 4rem 0 5rem;
+    }
+    .lock-button {
+      background: none;
+      border: 2px solid #b92e2e;
+      color: #ffc5a0;
+      font-size: 2rem;
+      padding: 1.2rem 2.5rem;
+      border-radius: 60px;
+      backdrop-filter: blur(10px);
+      background: rgba(128, 0, 0, 0.2);
+      box-shadow: 0 0 30px #ff8c5a;
+      cursor: pointer;
+      transition: 0.3s;
+      font-family: 'Didot', serif;
+      letter-spacing: 3px;
+    }
+    .lock-button:hover {
+      background: #6b0f0f;
+      border-color: gold;
+      box-shadow: 0 0 60px #ffb86b;
+    }
+
+    /* signature */
+    .signature {
+      font-family: 'Brush Script MT', cursive;
+      font-size: 3.2rem;
+      text-align: right;
+      color: #e6c89b;
+      text-shadow: 0 0 15px #d4af37;
+      margin-top: 5rem;
+      border-top: 1px dashed #b15933;
+      padding-top: 2rem;
+      animation: sparkle 3s infinite;
+    }
+    @keyframes sparkle { 0% { text-shadow: 0 0 5px gold; } 50% { text-shadow: 0 0 30px #ffaa33, 0 0 10px white; } }
+
+    /* hide audio element */
+    #bg-audio {
+      display: none;
+    }
+
+    /* mobile fine-tuning */
+    @media (max-width: 500px) {
+      p { font-size: 1.3rem; }
+      .foreign-block { font-size: 1.3rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- audio element (silent until unlocked) -->
+  <audio id="bg-audio" loop preload="auto">
+    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" type="audio/mp3">
+    <!-- Fallback explanation: In production, replace with actual "Perfect Duet" file.
+         Since copyright restrictions prevent hosting that track, we use a placeholder instrumental.
+         For true immersion, replace 'src' with your private licensed file. -->
+  </audio>
+
+  <!-- golden invitation overlay -->
+  <div id="invitationOverlay" class="audio-invitation">
+    <div class="invitation-card" id="unlockBtn">
+      <div class="vinyl-heart">❤️‍🔥</div>
+      <div class="invite-text">touch to begin</div>
+      <div class="invite-text" style="font-size: 2.8rem; margin: 0;">💿</div>
+      <div class="sub-invite">our song · perfect duet</div>
+    </div>
+  </div>
+
+  <!-- floating petals + sparkles canvas (two layers) -->
+  <canvas id="petal-canvas"></canvas>
+  <canvas id="sparkle-canvas"></canvas>
+
+  <!-- main scroll container with dynamic gradient background (already set in css) -->
+  <div class="scroll-container" id="scrollContainer">
+    <div class="content">
+
+      <!-- SECTION I: SANCTUARY (peace) -->
+      <section class="chapter">
+        <div class="section-title">
+          <span class="crown-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="1.2"><path d="M2 8l4 4 4-4 4 4 4-4 4 4v8H2V8z" fill="#b8860b33"/></svg>
+          </span>
+          <span>THE SANCTUARY · PEACE</span>
+        </div>
+        <div class="cinematic-gif candle-gif"></div>
+        <p>My wife… my princess…</p>
+        <p>Linda, from the moment you came into my life, something inside me changed. You are not just a woman behind a screen. You are my peace. You are my comfort. You are the one I choose every single day.</p>
+        <p>You are so gorgeous, and I don't just mean your face. I mean the way your eyes shine when you talk. The way your smile softens my heart. The way your presence makes me feel like the luckiest man alive.</p>
+        <div class="photo-frame">✦ your smile lives here ✦</div>
+      </section>
+
+      <!-- SECTION II: THE PROTECTOR (comfort) -->
+      <section class="chapter">
+        <div class="section-title">
+          <span>🛡️⚡</span>
+          <span>THE PROTECTOR · COMFORT</span>
+        </div>
+        <div class="cinematic-gif heartbeat-gif"></div>
+        <p>But what makes you even more beautiful is how lovely you are… how you carry me, how you care about me, how you check on me, how you make sure I'm okay. You don't just love me — you protect my heart.</p>
+        <p>My favorite memory with you will always be when we call each other… and fall asleep together. No noise. No stress. Just your breathing on the phone. Just knowing you're there. That calm feeling… that safe feeling… that's love. That's real.</p>
+        <p>Even through distance, you feel close. Even through a phone, you feel like home.</p>
+      </section>
+
+      <!-- SECTION III: UNIVERSAL VOW (3 languages) -->
+      <section class="chapter">
+        <div class="section-title">
+          <span>📜✒️</span>
+          <span>THE UNIVERSAL VOW</span>
+        </div>
+        <div class="foreign-block">🇪🇸 Mi esposa… mamacita… mi vida… mi corazón… mi amor… te amo mucho. Eres la mujer de mis sueños. Cuando escucho tu voz, mi corazón late más fuerte. Cuando dices mi nombre, me vuelvo loco por ti.</div>
+        <div class="foreign-block">🇫🇷 Ma femme… je t'aime ma chérie. Tu es mon amour, mon bonheur, mon avenir. Quand je pense à toi, je souris comme un homme amoureux pour la première fois.</div>
+        <div class="foreign-block" style="font-family: 'Amiri', serif;">🇸🇦 زوجتي… حبيبتي… عمري… أحبك. أموت فيك. وجودك في حياتي نعمة من ربّي، وأنتِ سعادتي وراحتي وأغلى ما عندي.</div>
+      </section>
+
+      <!-- FOR YOUR EYES ONLY - TRANSITION BUTTON -->
+      <div class="transition-lock" id="passionTrigger">
+        <button class="lock-button" id="eyesOnlyBtn">🔒 FOR YOUR EYES ONLY 🔒</button>
+      </div>
+
+      <!-- SECTION IV: TRANSITION TO FIRE (longing) — initially subtle, will glow more after click -->
+      <section class="chapter" id="sectionFire">
+        <div class="section-title">
+          <span>🔥🌑</span>
+          <span>TRANSITION · LONGING</span>
+        </div>
+        <div class="cinematic-gif embers-gif"></div>
+        <p>You are my wife in my heart. My princess. The woman I want beside me when I wake up. The one I want to hold at night — not through a phone — but for real, in my arms.</p>
+        <p>And since it's Valentine's Day… let me tell you something more…</p>
+        <p>If I were with you right now, it wouldn't stop at kisses.</p>
+        <p>I would pull you against me firmly… feeling your body press into mine… letting you feel exactly how much I want you. Not gently this time — but with intention. With heat.</p>
+        <p>I would whisper in your ear, low and slow, <em>"Mi esposa… mamacita… you drive me insane."</em></p>
+      </section>
+
+      <!-- SECTION V: PURE DESIRE (passion) -->
+      <section class="chapter">
+        <div class="section-title">
+          <span>⚡💋</span>
+          <span>PURE DESIRE</span>
+        </div>
+        <div class="cinematic-gif embers-gif flame-intense"></div>
+        <p>My hands wouldn't just hold you — they would grip you. Explore you. Claim you.</p>
+        <p>Slow at first… teasing you… making you wait… making your breath change…</p>
+        <p>I'd kiss you deeper… harder… not polite kisses — but the kind that make you forget everything else.</p>
+        <p>I would look into your eyes and let you see it — that hunger. That fire. That need.</p>
+        <p>Because with you, it's not just love. It's desire that builds and builds until it's almost too much.</p>
+        <p>I imagine lifting you… feeling your legs wrap around me… your fingers in my hair… your voice getting softer… weaker… because you feel what I'm doing to you.</p>
+        <p>I imagine making you melt under me… slowly… patiently… taking my time… enjoying every reaction you give me.</p>
+      </section>
+
+      <!-- SECTION VI: FINALE (promise) -->
+      <section class="chapter">
+        <div class="section-title">
+          <span class="infinity-icon">
+            <svg width="40" height="24" viewBox="0 0 40 20" fill="none" stroke="#d4af37" stroke-width="2"><path d="M6 10 C2 4 12 2 16 6 C20 10 24 14 28 14 C34 14 36 6 30 6 C24 6 20 10 16 10 C12 10 10 6 6 10 Z"/></svg>
+          </span>
+          <span>THE PROMISE · AFTERGLOW</span>
+        </div>
+        <p>And when you whisper my name…</p>
+        <p>When you look at me with that mix of love and heat…</p>
+        <p>I'd remind you softly, <em>"You're my wife… my princess… and tonight… you're mine."</em></p>
+        <p>Not rushed. Not careless. But deep. Intense. Passionate.</p>
+        <p>The kind of connection that leaves you breathless…<br>The kind that makes you feel wanted… desired… worshipped…<br>Until you can't think anymore — only feel.</p>
+        <p>And one day… when there's no distance between us… I won't just imagine it. I'll show you exactly how much fire I've been holding inside for you.</p>
+      </section>
+
+      <!-- gold signature -->
+      <div class="signature">Forever Yours ❤️🔥,<br>Abdelhak</div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // -------------------- AUDIO + INVITATION --------------------
+      const audio = document.getElementById('bg-audio');
+      const overlay = document.getElementById('invitationOverlay');
+      const unlockBtn = document.getElementById('unlockBtn');
+
+      // replace with actual Perfect Duet file. For demo we use a sample that loops okay-ish.
+      // To make it seamless, set a proper file. We'll just use a longer one.
+      audio.src = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3'; // instrumental, ~5min
+
+      unlockBtn.addEventListener('click', () => {
+        audio.play().then(() => {
+          overlay.style.opacity = '0';
+          overlay.style.visibility = 'hidden';
+        }).catch(e => {
+          alert('Please tap again to begin our song (autoplay policy)');
+        });
+      });
+
+      // -------------------- DYNAMIC GRADIENT (already in css, but we can tweak via scroll) - but we want 'blush to midnight crimson'
+      window.addEventListener('scroll', () => {
+        // optional: modify gradient stops based on scroll. we keep as linear in container.
+        // but we want the "embers" effect after lock.
+      });
+
+      // -------------------- "FOR YOUR EYES ONLY" atmospheric shift --------------------
+      const eyesBtn = document.getElementById('eyesOnlyBtn');
+      const scrollDiv = document.getElementById('scrollContainer');
+      const sectionFire = document.getElementById('sectionFire');
+      const bodyEl = document.body;
+
+      eyesBtn.addEventListener('click', () => {
+        // intensify background toward deep black/red
+        scrollDiv.style.background = 'linear-gradient(180deg, #b32e3a 0%, #2f0505 40%, #1a0101 80%, #000000 100%)';
+        // add pulsing ember class to all ember gifs
+        document.querySelectorAll('.embers-gif').forEach(g => g.classList.add('flame-intense'));
+        // optional: small swell emulation (music swell via volume)
+        if (audio) audio.volume = 1.0; // max
+        // subtle red glow on text
+        document.querySelectorAll('.chapter p').forEach(p => p.style.color = '#ffdad7');
+        // lock button fades
+        eyesBtn.style.opacity = '0.6';
+        eyesBtn.innerText = '❤️‍🔥 UNLOCKED ❤️‍🔥';
+      });
+
+      // -------------------- PARTICLE SYSTEMS (petals & sparkles) --------------------
+      const petalCanvas = document.getElementById('petal-canvas');
+      const sparkleCanvas = document.getElementById('sparkle-canvas');
+      let w = window.innerWidth, h = window.innerHeight;
+      let petals = [], sparkles = [];
+
+      function resizeCanvases() {
+        w = window.innerWidth; h = window.innerHeight;
+        petalCanvas.width = w; petalCanvas.height = h;
+        sparkleCanvas.width = w; sparkleCanvas.height = h;
+      }
+      window.addEventListener('resize', resizeCanvases);
+      resizeCanvases();
+
+      const petalCount = 35;
+      const sparkleCount = 45;
+
+      for (let i=0; i<petalCount; i++) {
+        petals.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          size: 8 + Math.random()*18,
+          speedY: 0.4 + Math.random() * 1.2,
+          speedX: 0.1 + Math.random() * 0.5,
+          rot: Math.random()*6.28,
+          color: `rgba(200, 80, 60, ${0.3+Math.random()*0.3})`,
+        });
+      }
+      for (let i=0; i<sparkleCount; i++) {
+        sparkles.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          radius: 1.5 + Math.random() * 5,
+          speedY: -0.2 - Math.random() * 0.8,
+          speedX: (Math.random()-0.5)*0.2,
+          life: 1,
+        });
+      }
+
+      function drawPetals() {
+        const ctx = petalCanvas.getContext('2d');
+        ctx.clearRect(0, 0, w, h);
+        for (let p of petals) {
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot);
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, p.size*0.6, p.size*0.3, 0, 0, Math.PI*2);
+          ctx.fill();
+          ctx.restore();
+
+          p.x += p.speedX * 0.7;
+          p.y += p.speedY;
+          if (p.y > h + 30) { p.y = -30; p.x = Math.random() * w; }
+          if (p.x > w+20) p.x = -20;
+          if (p.x < -20) p.x = w+20;
+          // mouse reaction (gentle shift)
+          if (mouseX && mouseY) {
+            let dx = mouseX - p.x, dy = mouseY - p.y;
+            let dist = Math.sqrt(dx*dx+dy*dy);
+            if (dist < 120) {
+              p.x -= dx*0.005;
+              p.y -= dy*0.005;
+            }
+          }
+        }
+        requestAnimationFrame(drawPetals);
+      }
+
+      let mouseX = null, mouseY = null;
+      window.addEventListener('mousemove', (e) => { mouseX = e.clientX; mouseY = e.clientY; });
+      window.addEventListener('touchmove', (e) => {
+        if (e.touches[0]) { mouseX = e.touches[0].clientX; mouseY = e.touches[0].clientY; }
+      });
+
+      function drawSparkles() {
+        const ctx = sparkleCanvas.getContext('2d');
+        ctx.clearRect(0, 0, w, h);
+        for (let s of sparkles) {
+          ctx.fillStyle = `rgba(255, 235, 150, ${0.4+Math.random()*0.3})`;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.radius * 0.7, 0, 2*Math.PI);
+          ctx.fill();
+          s.x += s.speedX + (mouseX ? (mouseX - s.x)*0.002 : 0);
+          s.y += s.speedY + (mouseY ? (mouseY - s.y)*0.001 : 0);
+          if (s.y < -20) { s.y = h+10; s.x = Math.random()*w; }
+          if (s.x > w+20) s.x = -20;
+          if (s.x < -20) s.x = w+20;
+        }
+        requestAnimationFrame(drawSparkles);
+      }
+
+      drawPetals();
+      drawSparkles();
+
+      // optional: scroll smoothness (native)
+
+      // make chapters appear with slight parallax – no need, they're visible
+      // but we want smooth transition: already OK
+
+      // add a subtle glow to the infinity symbol after click
+      document.querySelectorAll('.infinity-icon').forEach(icon => {
+        icon.style.filter = 'drop-shadow(0 0 8px #d4af37)';
+      });
+
+    })();
+  </script>
+  <!-- ensure foreign characters support arabic (optional) -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri&display=swap">
+</body>
+</html>
